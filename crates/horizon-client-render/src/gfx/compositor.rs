@@ -34,7 +34,7 @@ impl Renderer {
             &self.adapter,
             &self.device,
             &self.queue,
-            window.inner_size().into(),
+            horizon_client_input::window::surface_size(&window).into(),
         )
     }
 

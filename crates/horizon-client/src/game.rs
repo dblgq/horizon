@@ -18008,12 +18008,12 @@ impl ApplicationHandler for Game<'_> {
         );
         // `--offscreen` renders into a texture: its window would only show white.
         let window_step = startup::step("window.create");
-        let window = match event_loop.create_window(
+        let window = match event_loop.create_window(horizon_client::window::fill_screen(
             attributes
                 .with_inner_size(winit::dpi::LogicalSize::new(size[0], size[1]))
                 .with_fullscreen(fullscreen.then_some(winit::window::Fullscreen::Borderless(None)))
                 .with_visible(!self.options.offscreen),
-        ) {
+        )) {
             Ok(w) => Arc::new(w),
             Err(e) => {
                 self.error = Some(e.into());
@@ -22155,12 +22155,12 @@ impl Loading {
         );
         // `--offscreen` renders into a texture: its window would only show white.
         let window_step = startup::step("window.create");
-        let window = match event_loop.create_window(
+        let window = match event_loop.create_window(horizon_client::window::fill_screen(
             attributes
                 .with_inner_size(winit::dpi::LogicalSize::new(size[0], size[1]))
                 .with_fullscreen(fullscreen.then_some(winit::window::Fullscreen::Borderless(None)))
                 .with_visible(!self.options.as_ref().is_some_and(|o| o.offscreen)),
-        ) {
+        )) {
             Ok(w) => Arc::new(w),
             Err(e) => {
                 self.error = Some(e.into());

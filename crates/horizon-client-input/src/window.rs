@@ -644,6 +644,29 @@ pub fn with_horizon_icon(
     attributes
 }
 
+/// A window on iOS takes the whole screen: winit there makes the view exactly the size asked
+/// for, so a desktop window size would leave it smaller than the screen. Elsewhere unchanged.
+pub fn fill_screen(attributes: winit::window::WindowAttributes) -> winit::window::WindowAttributes {
+    #[cfg(target_os = "ios")]
+    let attributes = {
+        let mut attributes = attributes;
+        attributes.inner_size = None;
+        attributes
+    };
+    attributes
+}
+
+/// The size to draw at: the window's inner size, except on iOS, where winit's inner size is the
+/// safe area while the view (and its Metal layer) covers the whole screen, as its `Resized`
+/// events say. Drawing at the safe area's size there stretches every frame.
+pub fn surface_size(window: &winit::window::Window) -> winit::dpi::PhysicalSize<u32> {
+    if cfg!(target_os = "ios") {
+        window.outer_size()
+    } else {
+        window.inner_size()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

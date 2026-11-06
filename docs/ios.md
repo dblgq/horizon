@@ -44,7 +44,8 @@ Edits to upstream files stay small `cfg(target_os = "ios")` hooks, so weekly mer
 - **UIScene.** Apps linked with the iOS 27 SDK must use the UIScene life cycle, and winit 0.30 does
   not. `run-sim.sh` stamps the binary as built with SDK 26 (`vtool -set-build-version`), so iOS starts
   it the old way. iOS 26 devices do not enforce this.
-- The window does not yet match the screen's size and safe areas.
+- The game draws over the whole screen; menus and the HUD do not yet keep clear of the Dynamic Island
+  and the home indicator (winit's safe area).
 
 ## Weekly update
 
