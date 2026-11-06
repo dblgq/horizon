@@ -8,6 +8,8 @@ members = [
     "crates/horizon-hdr",
     "crates/horizon-world",
     "crates/horizon-client",
+    # The iOS app: the game with the app sandbox's folders (docs/ios.md).
+    "crates/horizon-ios",
     "crates/horizon-client-lib",
     "crates/horizon-client-core",
     "crates/horizon-client-input",

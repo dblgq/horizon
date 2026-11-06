@@ -1,0 +1,23 @@
+[package]
+name = "horizon-ios"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version = "1.90"
+publish = false
+description = "Horizon on iOS: the game, started in the app sandbox's folders"
+
+[[bin]]
+name = "horizon-ios"
+path = "src/main.rs"
+
+# Only an iOS build needs the game: elsewhere this is an empty program, so
+# workspace-wide builds and checks on other systems stay as fast as before.
+[target.'cfg(target_os = "ios")'.dependencies]
+horizon-client = { path = "../horizon-client" }
+horizon-threads = { path = "../horizon-threads" }
+horizon-mods = { path = "../horizon-mods" }
+log = "0.4"
+
+[lints]
+workspace = true

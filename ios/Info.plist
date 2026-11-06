@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>horizon-ios</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(HORIZON_BUNDLE_ID)</string>
+	<key>CFBundleName</key>
+	<string>Horizon</string>
+	<key>CFBundleDisplayName</key>
+	<string>Horizon</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>$(HORIZON_PLATFORM)</string>
+	</array>
+	<key>MinimumOSVersion</key>
+	<string>17.0</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+		<integer>2</integer>
+	</array>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+		<string>metal</string>
+	</array>
+	<!-- The game is played in landscape, full screen, with no status bar. -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<!-- An empty launch screen: without one iOS letterboxes the app. -->
+	<key>UILaunchScreen</key>
+	<dict/>
+	<!-- ProMotion: up to 120 Hz instead of 60. -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<!-- Documents/ (game folder, resources, logs) in the Files app. -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+</dict>
+</plist>

@@ -1864,7 +1864,7 @@ fn backend_order(
     wgpu_backend: bool,
 ) -> Vec<wgpu::Backends> {
     use wgpu::Backends;
-    if os == "macos" || wgpu_backend {
+    if os == "macos" || os == "ios" || wgpu_backend {
         return vec![Backends::default()];
     }
     let windows = os == "windows";
