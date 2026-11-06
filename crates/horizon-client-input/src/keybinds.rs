@@ -298,6 +298,7 @@ pub use horizon_client_core::key_display::display_name;
 /// A key event: what the layout writes on its key, without modifiers, names
 /// that key from now on (`key_display::learn_layout`), so an AZERTY player's
 /// Q key shows A.
+#[cfg(not(target_os = "ios"))]
 pub fn learn_layout(event: &winit::event::KeyEvent) {
     use winit::keyboard::{Key, PhysicalKey};
     use winit::platform::modifier_supplement::KeyEventExtModifierSupplement;
@@ -312,6 +313,24 @@ pub fn learn_layout(event: &winit::event::KeyEvent) {
         Key::Character(text) => learn(name, &text),
         Key::Dead(Some(c)) => learn(name, c.encode_utf8(&mut [0; 4])),
         _ => {}
+    }
+}
+
+/// iOS: winit has no `key_without_modifiers` there, so a hardware keyboard's
+/// layout is learnt from keys pressed with no modifier held.
+#[cfg(target_os = "ios")]
+pub fn learn_layout(event: &winit::event::KeyEvent) {
+    use winit::keyboard::{Key, PhysicalKey};
+    let PhysicalKey::Code(code) = event.physical_key else {
+        return;
+    };
+    let Some(name) = key_name(code) else {
+        return;
+    };
+    if let Key::Character(text) = &event.logical_key
+        && text.chars().all(|c| !c.is_uppercase())
+    {
+        horizon_client_core::key_display::learn_layout(name, text);
     }
 }
 

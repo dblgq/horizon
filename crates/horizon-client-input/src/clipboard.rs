@@ -119,6 +119,11 @@ pub trait Clipboard {
     fn set(&mut self, text: &str);
 }
 
+// iOS has no arboard: the same names come from clipboard_ios.rs.
+#[cfg(target_os = "ios")]
+#[path = "clipboard_ios.rs"]
+mod arboard;
+
 /// The system clipboard (`ClipboardManager`). On Wayland, arboard uses the
 /// data-control protocol and falls back to X11 (XWayland) on compositors
 /// without it. When no system clipboard can be reached, text copied in the

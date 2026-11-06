@@ -32,8 +32,32 @@ pub fn resident_bytes() -> Option<u64> {
     Some(pages * u64::try_from(page).ok()?)
 }
 
+/// The memory this process holds in RAM, in bytes: `task_info`, as `libc` has no
+/// `proc_pidinfo` on iOS.
+#[cfg(target_os = "ios")]
+pub fn resident_bytes() -> Option<u64> {
+    let mut count = libc::MACH_TASK_BASIC_INFO_COUNT;
+    // SAFETY: all-zero is a valid value of this plain C struct, and the call writes at most
+    // `count` natural_t words into it; the task's own port needs no releasing.
+    unsafe {
+        let mut info: libc::mach_task_basic_info = std::mem::zeroed();
+        // libc declares the task's port only on macOS; libSystem has it on iOS too.
+        unsafe extern "C" {
+            static mach_task_self_: libc::mach_port_t;
+        }
+        let task = mach_task_self_;
+        let status = libc::task_info(
+            task,
+            libc::MACH_TASK_BASIC_INFO,
+            (&raw mut info).cast(),
+            &mut count,
+        );
+        (status == libc::KERN_SUCCESS).then_some(info.resident_size)
+    }
+}
+
 /// The memory this process holds in RAM, in bytes.
-#[cfg(target_vendor = "apple")]
+#[cfg(all(target_vendor = "apple", not(target_os = "ios")))]
 pub fn resident_bytes() -> Option<u64> {
     let size = std::mem::size_of::<libc::proc_taskinfo>() as libc::c_int;
     // SAFETY: all-zero is a valid value of this plain C struct, and the call writes at most `size`
