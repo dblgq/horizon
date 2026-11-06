@@ -3,6 +3,9 @@
 This fork's `ios` branch runs Horizon on iPhone. It is upstream Horizon plus a thin iOS layer,
 merged with upstream every week.
 
+How to install it on a phone: [ios/README.md](../ios/README.md). What comes next:
+[ios/ROADMAP.md](../ios/ROADMAP.md). This page is how the port is built.
+
 ## Status
 
 - Builds for `aarch64-apple-ios` (iPhone) and `aarch64-apple-ios-sim` (Simulator on Apple Silicon).
