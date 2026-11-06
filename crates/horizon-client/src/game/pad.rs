@@ -40,6 +40,9 @@ pub(super) struct Pads {
     devices: hardware::Devices,
     /// The virtual pad of `horizon-ctl pad`.
     injected: PadState,
+    /// The on-screen touch controls (`touch_play.rs`).
+    #[cfg(target_os = "ios")]
+    pub(super) touch: horizon_client_render::touch::TouchControls,
     /// The virtual pad was in use at the last poll.
     virtual_input: bool,
     /// Buttons a `pad ... tap` releases at the next poll.
@@ -306,6 +309,10 @@ impl Game<'_> {
             style == GlyphStyle::Nintendo && self.pad.by_letter(&self.settings.controller);
         self.ui.options.pad_driving = self.pad.in_use && self.pad_focus_mode();
         let mut state = hardware.merge(&self.pad.injected);
+        #[cfg(target_os = "ios")]
+        {
+            state = self.touch_play_state(state);
+        }
         let activity = self.pad.activity.observe(&state, &self.settings.controller);
         for (i, (stick, deadzone)) in [
             (&mut state.left, self.settings.controller.move_deadzone),

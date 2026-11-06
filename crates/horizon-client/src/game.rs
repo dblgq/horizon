@@ -362,6 +362,8 @@ mod tick_script;
 mod titles;
 mod tnt;
 mod totem;
+#[cfg(target_os = "ios")]
+mod touch_play;
 mod trading;
 mod transient_blocks;
 mod trial_spawner;
@@ -16649,6 +16651,8 @@ impl Game<'_> {
         pr.lap("pr_projection");
         // GUI hooks project against this frame's camera, including its bob/spin and FOV.
         let mut hud = horizon_client::spans::time("hud", || self.hud(size));
+        #[cfg(target_os = "ios")]
+        self.touch_play_draw(&mut hud);
         self.flush_ime(&mut hud);
         self.native_gui_render_post(&mut hud, self.ui.hide_gui, self.focused);
         self.resolve_inline_profiles(&hud.inline_profiles);
@@ -18175,6 +18179,16 @@ impl Game<'_> {
     /// it a handler both can call and a `gamepad::Route` (screenshot and fullscreen do this). A
     /// screen's own raw keys, text and mods' key hooks stay raw on purpose.
     fn handle_window_event_inner(&mut self, event_loop: &dyn EventLoopCtl, mut event: WindowEvent) {
+        #[cfg(target_os = "ios")]
+        {
+            if let WindowEvent::Touch(touch) = event {
+                self.touch_play_event(touch);
+                return;
+            }
+            if self.touch_back_click(&event) {
+                return;
+            }
+        }
         if let WindowEvent::Focused(false) = &event {
             self.physical_keys.clear();
             self.physical_buttons.clear();

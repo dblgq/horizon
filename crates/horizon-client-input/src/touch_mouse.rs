@@ -21,10 +21,23 @@ thread_local! {
     static PRIMARY: std::cell::Cell<Option<u64>> = const { std::cell::Cell::new(None) };
 }
 
+/// The world is in play: new touches reach the game as touches, for its touch controls.
+static PLAY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Whether new touches go to the game's touch controls (play) instead of the mouse (menus).
+/// A finger already acting as the mouse stays the mouse until it lifts.
+pub fn set_play(play: bool) {
+    PLAY.store(play, std::sync::atomic::Ordering::Relaxed);
+}
+
 fn translate(event: WindowEvent) -> [Option<WindowEvent>; 2] {
     let WindowEvent::Touch(touch) = event else {
         return [Some(event), None];
     };
+    let mouse = PRIMARY.with(|p| p.get());
+    if mouse != Some(touch.id) && PLAY.load(std::sync::atomic::Ordering::Relaxed) {
+        return [Some(event), None];
+    }
     let Some(state) = PRIMARY.with(|p| step(p, &touch)) else {
         return [None, None];
     };

@@ -6,10 +6,11 @@ merged with upstream every week.
 ## Status
 
 - Builds for `aarch64-apple-ios` (iPhone) and `aarch64-apple-ios-sim` (Simulator on Apple Silicon).
-- Starts in the Simulator, renders through Metal, loads the prepared game files and plays sound up
-  to the title screen.
-- Not yet: touch controls, on-screen keyboard, the system clipboard, getting the game files onto a
-  phone, a signed build on a phone.
+- Starts in the Simulator, renders through Metal, loads the prepared game files, plays sound and
+  plays with touch: menus by tapping and dragging (touches are the mouse), the world with
+  Vasysik's on-screen joystick and buttons, and a back button (Escape) over any screen in a world.
+- Not yet: typing (chat, signs), aiming by touch (the view aims from the centre), the layout
+  editor and touch settings, the system clipboard, a signed build on a phone.
 
 ## Run in the Simulator
 
@@ -39,7 +40,13 @@ MC="$HOME/Library/Application Support/minecraft"   # or the Horizon launcher's l
 target/fast/horizon-prepare --prepare --minecraft-dir "$MC" --server-jar <26.3 server jar>
 target/fast/horizon-prepare sounds --minecraft-dir "$MC"
 target/fast/horizon-prepare --check                 # silent and exit 0 when complete
+python3 tools/ios_controls.py                       # the touch controls' button art
 ```
+
+The touch controls draw Mojang's Bedrock button art (`gui/bedrock/` sprites). `tools/ios_controls.py`
+downloads it from Mojang/bedrock-samples at the revision `ios/bedrock-controls.json` pins, checks each
+file's SHA-256 and puts it with the prepared files. It is Mojang's, under Mojang's terms: never
+commit it. Without it the controls work but are invisible.
 
 If the game is installed through Prism Launcher, the Horizon launcher's
 `~/Library/Application Support/horizon-launcher/linked-minecraft` links its files in the official
@@ -56,6 +63,10 @@ section. Phones from the A11 on draw indirectly, as on a Mac.
 | `ios/Info.plist` | Landscape, full screen, 120 Hz, `Documents/` shown in the Files app |
 | `ios/run-sim.sh` | Build, bundle, sign ad hoc, install and launch in the Simulator |
 | `crates/horizon-client-input/src/clipboard_ios.rs` | Stand-in for `arboard`, which has no iOS backend |
+| `crates/horizon-client-input/src/touch_mouse.rs` | Touches as the mouse outside play |
+| `crates/horizon-client-render/src/touch.rs`, `touch/` | Touch controls from Vasysik/horizon-android (MIT), unchanged |
+| `crates/horizon-client/src/game/touch_play.rs` | The controls in play (merged with the pads' state in `poll_pads`) and the back button |
+| `ios/bedrock-controls.json`, `tools/ios_controls.py` | The controls' art: names and checksums, and the downloader |
 
 Edits to upstream files stay small `cfg(target_os = "ios")` hooks, so weekly merges rarely conflict.
 

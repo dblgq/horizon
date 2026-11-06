@@ -267,6 +267,10 @@ const KEYS: &[(&str, KeyCode)] = &[
     ("key.keyboard.right.alt", KeyCode::AltRight),
     ("key.keyboard.right.win", KeyCode::SuperRight),
 ];
+/// Every key a binding can name, with its key code (touch controls' custom buttons).
+pub fn available_keys() -> &'static [(&'static str, KeyCode)] {
+    KEYS
+}
 pub fn key_code(name: &str) -> Option<KeyCode> {
     KEYS.iter().find(|(n, _)| *n == name).map(|(_, k)| *k)
 }
