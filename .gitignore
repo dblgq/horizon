@@ -35,3 +35,6 @@
 
 # Release-only compiled original exporter bundle.
 /exporters/
+
+# The Xcode project XcodeGen makes from ios/project.yml (ios/run-device.sh).
+/ios/Horizon.xcodeproj/

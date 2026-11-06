@@ -4,6 +4,9 @@
 //! through the controller mappings. Outside play, touches are the mouse
 //! (`horizon_client_input::touch_mouse`).
 //!
+//! Text fields get the system keyboard: the game allows the input method while one has focus
+//! (`sync_ime`), which winit shows the keyboard for, and `touch_mouse` turns its keys into text.
+//!
 //! The view aims from the screen's centre (crosshair mode): tapping a block to aim at it needs
 //! the picking to follow the touch, which is not wired yet.
 use super::*;
@@ -17,6 +20,8 @@ const BACK: [f32; 3] = [6.0, 6.0, 24.0];
 thread_local! {
     /// A press began on the back button: its release is Escape, never the screen's click.
     static BACK_HELD: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    /// The touch controls, not a real controller, played last.
+    static TOUCH_DROVE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
 impl Game<'_> {
@@ -45,6 +50,7 @@ impl Game<'_> {
             self.pad.touch.clear();
             return;
         }
+        TOUCH_DROVE.set(true);
         let started = touch.phase == TouchPhase::Started;
         let ended = touch.phase == TouchPhase::Ended;
         let point = [
@@ -106,8 +112,17 @@ impl Game<'_> {
     pub(super) fn touch_play_state(&mut self, state: PadState) -> PadState {
         let in_play = self.touch_in_play();
         horizon_client_input::touch_mouse::set_play(in_play);
+        if state != PadState::default() {
+            TOUCH_DROVE.set(false);
+        }
         if !in_play {
             self.pad.touch.clear();
+            // The touch controls drove the pad's state: a screen opened from play (chat, a
+            // sign) is played by touch, as with the mouse, so the controller's own keyboard
+            // stays shut and the system keyboard types into it.
+            if TOUCH_DROVE.get() {
+                self.pad.in_use = false;
+            }
             return state;
         }
         self.pad.touch.force_crosshair = true;

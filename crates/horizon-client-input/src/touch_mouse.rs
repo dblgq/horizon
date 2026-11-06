@@ -2,8 +2,13 @@
 //! moves the cursor and holds the left button until it lifts, so every screen made for a mouse
 //! (buttons, sliders, lists, the inventory) works by tapping and dragging. Other fingers are
 //! ignored while it is down. Elsewhere touches pass through unchanged.
+//!
+//! Also the system keyboard's text on iOS: winit sends each typed character as a press of an
+//! unidentified key, and Return as a typed `"\n"`. The characters become the input method's
+//! committed text, which reaches every text field (`ime_commit`), and Return becomes Enter.
 
-use winit::event::{ElementState, MouseButton, Touch, TouchPhase, WindowEvent};
+use winit::event::{ElementState, Ime, KeyEvent, MouseButton, Touch, TouchPhase, WindowEvent};
+use winit::keyboard::{Key, KeyCode, NamedKey, PhysicalKey};
 
 /// The events the game sees for one window event: a touch becomes the cursor's move and,
 /// when it starts or ends, the left button's press or release.
@@ -31,8 +36,14 @@ pub fn set_play(play: bool) {
 }
 
 fn translate(event: WindowEvent) -> [Option<WindowEvent>; 2] {
-    let WindowEvent::Touch(touch) = event else {
-        return [Some(event), None];
+    let touch = match event {
+        WindowEvent::Touch(touch) => touch,
+        WindowEvent::KeyboardInput {
+            device_id,
+            event: key,
+            is_synthetic,
+        } => return typed(device_id, key, is_synthetic),
+        event => return [Some(event), None],
     };
     let mouse = PRIMARY.with(|p| p.get());
     if mouse != Some(touch.id) && PLAY.load(std::sync::atomic::Ordering::Relaxed) {
@@ -51,6 +62,63 @@ fn translate(event: WindowEvent) -> [Option<WindowEvent>; 2] {
         button: MouseButton::Left,
     });
     [Some(moved), button]
+}
+
+/// What a key from the system keyboard becomes.
+#[derive(Debug, PartialEq)]
+enum Typed {
+    /// A typed character: the input method's committed text.
+    Text(String),
+    /// Return: the Enter key.
+    Enter,
+    /// The release of a typed character: nothing.
+    Nothing,
+    /// A real key (a hardware keyboard, Backspace): unchanged.
+    Key,
+}
+
+fn typed_as(logical: &Key, physical: &PhysicalKey, state: ElementState) -> Typed {
+    match logical {
+        Key::Character(text) if matches!(physical, PhysicalKey::Unidentified(_)) => {
+            if text == "\n" || text == "\r" {
+                Typed::Enter
+            } else if state == ElementState::Pressed {
+                Typed::Text(text.to_string())
+            } else {
+                Typed::Nothing
+            }
+        }
+        _ => Typed::Key,
+    }
+}
+
+/// A key from the system keyboard: a typed character (an unidentified key) is committed text on
+/// its press, Return is Enter; real keys (a hardware keyboard, Backspace) pass unchanged.
+fn typed(
+    device_id: winit::event::DeviceId,
+    mut key: KeyEvent,
+    is_synthetic: bool,
+) -> [Option<WindowEvent>; 2] {
+    let event = match typed_as(&key.logical_key, &key.physical_key, key.state) {
+        Typed::Text(text) => Some(WindowEvent::Ime(Ime::Commit(text))),
+        Typed::Nothing => None,
+        Typed::Enter => {
+            key.logical_key = Key::Named(NamedKey::Enter);
+            key.physical_key = PhysicalKey::Code(KeyCode::Enter);
+            key.text = None;
+            Some(WindowEvent::KeyboardInput {
+                device_id,
+                event: key,
+                is_synthetic,
+            })
+        }
+        Typed::Key => Some(WindowEvent::KeyboardInput {
+            device_id,
+            event: key,
+            is_synthetic,
+        }),
+    };
+    [event, None]
 }
 
 /// What `touch` does to the mouse: `None` when it is not the primary finger, else the button
@@ -135,6 +203,41 @@ mod tests {
             mouse(3, TouchPhase::Started, 7.0),
             [at(7.0), press(ElementState::Pressed)]
         );
+    }
+
+    #[test]
+    fn the_system_keyboard_types_text_and_return_is_enter() {
+        use winit::keyboard::NativeKeyCode;
+        let soft = PhysicalKey::Unidentified(NativeKeyCode::Unidentified);
+        let char = |c: &str| Key::Character(c.into());
+        assert_eq!(
+            typed_as(&char("ж"), &soft, ElementState::Pressed),
+            Typed::Text("ж".into())
+        );
+        assert_eq!(
+            typed_as(&char("ж"), &soft, ElementState::Released),
+            Typed::Nothing
+        );
+        assert_eq!(
+            typed_as(&char("\n"), &soft, ElementState::Pressed),
+            Typed::Enter
+        );
+        assert_eq!(
+            typed_as(&char("\n"), &soft, ElementState::Released),
+            Typed::Enter
+        );
+        // Backspace and a hardware keyboard's keys are real keys.
+        let backspace = PhysicalKey::Code(KeyCode::Backspace);
+        assert_eq!(
+            typed_as(
+                &Key::Named(NamedKey::Backspace),
+                &backspace,
+                ElementState::Pressed
+            ),
+            Typed::Key
+        );
+        let a = PhysicalKey::Code(KeyCode::KeyA);
+        assert_eq!(typed_as(&char("a"), &a, ElementState::Pressed), Typed::Key);
     }
 
     #[test]

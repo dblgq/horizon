@@ -9,8 +9,10 @@ merged with upstream every week.
 - Starts in the Simulator, renders through Metal, loads the prepared game files, plays sound and
   plays with touch: menus by tapping and dragging (touches are the mouse), the world with
   Vasysik's on-screen joystick and buttons, and a back button (Escape) over any screen in a world.
-- Not yet: typing (chat, signs), aiming by touch (the view aims from the centre), the layout
-  editor and touch settings, the system clipboard, a signed build on a phone.
+- Runs on an iPhone (16 Pro, iOS 26.5) signed with a free Apple ID: `ios/run-device.sh`.
+- Text fields (chat, signs, books, searches) get the system keyboard.
+- Not yet: aiming by touch (the view aims from the centre), the layout editor and touch
+  settings, the system clipboard, safe areas (the Dynamic Island).
 
 ## Run in the Simulator
 
@@ -55,6 +57,26 @@ layout, and `horizon-launcher/server-jars/26.3.jar` is the server jar.
 The Simulator's GPU is an Apple2-family GPU with no indirect draws, so it draws terrain per
 section. Phones from the A11 on draw indirectly, as on a Mac.
 
+## Run on an iPhone
+
+```sh
+brew install xcodegen
+ios/run-device.sh
+```
+
+It makes `ios/Horizon.xcodeproj` from `ios/project.yml`, builds and signs the app (Xcode makes
+the provisioning profile), installs it on the connected iPhone, copies `.local/horizon-client/`
+into it (only changed files after the first time) and starts it.
+
+The first time, once: sign in to your Apple ID in Xcode (Settings > Accounts), connect the phone
+and trust the Mac, open `ios/Horizon.xcodeproj`, choose your Personal Team under Signing &
+Capabilities and press Run with the phone selected. Xcode then has a signing certificate, which
+`run-device.sh` takes the team from (or set `HORIZON_TEAM`). On the phone: turn on Developer Mode
+(Settings > Privacy & Security) and trust your Apple ID (Settings > General > VPN & Device
+Management).
+
+A free Apple ID's signature lasts 7 days: run `ios/run-device.sh` again to renew it. Saves stay.
+
 ## Layout
 
 | Path | What |
@@ -62,6 +84,8 @@ section. Phones from the A11 on draw indirectly, as on a Mac.
 | `crates/horizon-ios/` | The app's program: points the game at `Documents/`, then runs `horizon_client::entry::main` |
 | `ios/Info.plist` | Landscape, full screen, 120 Hz, `Documents/` shown in the Files app |
 | `ios/run-sim.sh` | Build, bundle, sign ad hoc, install and launch in the Simulator |
+| `ios/project.yml`, `ios/run-device.sh` | The phone build: XcodeGen's project, and build, sign, install, copy the game files, launch |
+| `crates/horizon-ios/build.rs` | 8 MB of main-thread stack (iOS gives 1 MB; the renderer's start overflowed it) |
 | `crates/horizon-client-input/src/clipboard_ios.rs` | Stand-in for `arboard`, which has no iOS backend |
 | `crates/horizon-client-input/src/touch_mouse.rs` | Touches as the mouse outside play |
 | `crates/horizon-client-render/src/touch.rs`, `touch/` | Touch controls from Vasysik/horizon-android (MIT), unchanged |
