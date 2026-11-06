@@ -22438,9 +22438,12 @@ impl ApplicationHandler for App {
         }
     }
     fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
-        match self {
-            App::Loading(loading) => loading.window_event(event_loop, id, event),
-            App::Ready(game) => game.window_event(event_loop, id, event),
+        // A touchscreen as the mouse where it is the only pointer (iOS); elsewhere unchanged.
+        for event in horizon_client_input::touch_mouse::events(event) {
+            match self {
+                App::Loading(loading) => loading.window_event(event_loop, id, event),
+                App::Ready(game) => game.window_event(event_loop, id, event),
+            }
         }
     }
     fn device_event(&mut self, event_loop: &ActiveEventLoop, id: DeviceId, event: DeviceEvent) {

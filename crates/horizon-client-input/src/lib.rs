@@ -15,4 +15,5 @@ pub mod keymapping;
 pub mod modifiers;
 pub mod mouse;
 pub mod snap;
+pub mod touch_mouse;
 pub mod window;
