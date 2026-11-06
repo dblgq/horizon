@@ -6,9 +6,10 @@ merged with upstream every week.
 ## Status
 
 - Builds for `aarch64-apple-ios` (iPhone) and `aarch64-apple-ios-sim` (Simulator on Apple Silicon).
-- Starts in the Simulator, renders through Metal and shows the game's own screens.
-- Not yet: touch controls, on-screen keyboard, the system clipboard, first-run download of the game
-  files, a signed build on a phone.
+- Starts in the Simulator, renders through Metal, loads the prepared game files and plays sound up
+  to the title screen.
+- Not yet: touch controls, on-screen keyboard, the system clipboard, getting the game files onto a
+  phone, a signed build on a phone.
 
 ## Run in the Simulator
 
@@ -20,10 +21,29 @@ ios/run-sim.sh                           # iPhone 16 Pro simulator
 HORIZON_SIM="iPhone Air" ios/run-sim.sh  # another one
 ```
 
-The script builds `horizon-ios`, wraps it in `Horizon.app` (`ios/Info.plist`), installs it and
-prints the app's game folder. The game looks for its prepared files in
-`Documents/.local/horizon-client/<version>/`. Without them it shows the "start from the launcher"
-screen.
+The script builds `horizon-ios`, wraps it in `Horizon.app` (`ios/Info.plist`), installs it,
+copies the prepared game files into it and prints the app's game folder. The game looks for them
+in `Documents/.local/horizon-client/<version>/`. Without them it shows the "start from the
+launcher" screen.
+
+### The game files
+
+They are made on the Mac from your own Minecraft: Java Edition, once per Minecraft version, into
+`.local/horizon-client/` (ignored by git: never commit them). `horizon-prepare` needs Java 25 with
+`javac`. The official launcher's `java-runtime-epsilon` has both:
+
+```sh
+cargo build --profile fast -p horizon-prepare
+export JAVA_HOME="$HOME/Library/Application Support/minecraft/runtime/java-runtime-epsilon/mac-os-arm64/java-runtime-epsilon/jre.bundle/Contents/Home"
+MC="$HOME/Library/Application Support/minecraft"   # or the Horizon launcher's linked-minecraft
+target/fast/horizon-prepare --prepare --minecraft-dir "$MC" --server-jar <26.3 server jar>
+target/fast/horizon-prepare sounds --minecraft-dir "$MC"
+target/fast/horizon-prepare --check                 # silent and exit 0 when complete
+```
+
+If the game is installed through Prism Launcher, the Horizon launcher's
+`~/Library/Application Support/horizon-launcher/linked-minecraft` links its files in the official
+layout, and `horizon-launcher/server-jars/26.3.jar` is the server jar.
 
 The Simulator's GPU is an Apple2-family GPU with no indirect draws, so it draws terrain per
 section. Phones from the A11 on draw indirectly, as on a Mac.

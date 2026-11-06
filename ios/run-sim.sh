@@ -4,8 +4,8 @@
 #   ios/run-sim.sh                 # iPhone 16 Pro simulator (the target phone), created on first use
 #   HORIZON_SIM="iPhone Air" ios/run-sim.sh
 #
-# The app's game folder (Documents/) is printed at the end: put the prepared
-# resources there as .local/horizon-client/<version>/.
+# Prepared game files in .local/horizon-client/ (horizon-prepare --prepare) are copied
+# into the app; HORIZON_RESOURCES names another folder. The game folder is printed at the end.
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -56,5 +56,17 @@ xcrun simctl bootstatus "$UDID" -b >/dev/null
 
 xcrun simctl install "$UDID" "$APP"
 xcrun simctl terminate "$UDID" "$BUNDLE_ID" 2>/dev/null || true
+
+# The prepared game files (horizon-prepare --prepare writes them to .local/horizon-client/),
+# copied into the app's game folder where the game looks for them. Only changed files are copied.
+DOCS="$(xcrun simctl get_app_container "$UDID" "$BUNDLE_ID" data)/Documents"
+RESOURCES="${HORIZON_RESOURCES:-.local/horizon-client}"
+if [ -f "$RESOURCES/26.3/horizon-resources.json" ] || ls "$RESOURCES"/*/horizon-resources.json >/dev/null 2>&1; then
+    mkdir -p "$DOCS/.local/horizon-client"
+    rsync -a --delete "$RESOURCES/" "$DOCS/.local/horizon-client/"
+else
+    echo "No prepared game files in $RESOURCES: the game shows where to get them."
+fi
+
 xcrun simctl launch "$UDID" "$BUNDLE_ID"
-echo "Game folder: $(xcrun simctl get_app_container "$UDID" "$BUNDLE_ID" data)/Documents"
+echo "Game folder: $DOCS"
